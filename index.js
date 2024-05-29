@@ -2,7 +2,7 @@ const os = require("os"),
     fs = require("fs"),
     path = require("path"),
     https = require("https"),
-    spawnSync = require("child_process").spawnSync,
+    spawnSync = require("child_process").spawnSync
     // core = require("../JsGithubActionEmulator/core")
 
 class Action {
