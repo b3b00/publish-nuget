@@ -92,7 +92,7 @@ console.log('[PACK] :: '+cmd)
 
         const pushCmd = `dotnet nuget push *.nupkg --source ${this.nugetSource}/v3/index.json --api-key ${this.nugetKey} --skip-duplicate ${!this.includeSymbols ? "--no-symbols" : ""}`;
         console.log("[PUSH] :: "+pushCmd);
-        pushOutput = this._executeCommand(pushCmd, { encoding: "utf-8" }).stdout
+        const pushOutput = this._executeCommand(pushCmd, { encoding: "utf-8" }).stdout
 
         console.log(pushOutput)
 
