@@ -86,7 +86,7 @@ console.log('[PACK] :: '+cmd)
         
         files = this._getFiles(dir);
         console.log(files);
-        const packs = this._getFiles(dir).filter(fn => {console.log(`(getFiles) : is ${fn} a nuget  ? ${fn.endsWith("nupkg")}`); return fn.endsWith("nupkg")});
+        const packages = this._getFiles(dir).filter(fn => {console.log(`(getFiles) : is ${fn} a nuget  ? ${fn.endsWith("nupkg")}`); return fn.endsWith("nupkg")});
 
         console.log(`Generated Package(s): ${packages.join(", ")}`)
 
