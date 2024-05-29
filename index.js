@@ -2,7 +2,8 @@ const os = require("os"),
     fs = require("fs"),
     path = require("path"),
     https = require("https"),
-    spawnSync = require("child_process").spawnSync
+    spawnSync = require("child_process").spawnSync,
+    // core = require("../JsGithubActionEmulator/core")
 
 class Action {
     constructor() {
@@ -19,6 +20,20 @@ class Action {
         this.nugetSource = process.env.INPUT_NUGET_SOURCE || process.env.NUGET_SOURCE
         this.nuspecFile = process.env.INPUT_NUSPEC_FILE
         this.includeSymbols = JSON.parse(process.env.INPUT_INCLUDE_SYMBOLS || process.env.INCLUDE_SYMBOLS)
+
+        // this.projectFile = core.getInput("INPUT_PROJECT_FILE_PATH")
+        // this.configuration = core.getInput("INPUT_BUILD_CONFIGURATION") || "Release"
+        // this.platform = core.getInput("INPUT_BUILD_PLATFORM")
+        // this.packageName = core.getInput("INPUT_PACKAGE_NAME") || core.getInput("PACKAGE_NAME")
+        // this.versionFile = core.getInput("INPUT_VERSION_FILE_PATH") || core.getInput("VERSION_FILE_PATH") || this.projectFile
+        // this.versionRegex = new RegExp(core.getInput("INPUT_VERSION_REGEX") || core.getInput("VERSION_REGEX"), "m")
+        // this.version = core.getInput("INPUT_VERSION_STATIC") || core.getInput("VERSION_STATIC")
+        // this.tagCommit = core.getInput("INPUT_TAG_COMMIT") || core.getInput("TAG_COMMIT")
+        // this.tagFormat = core.getInput("INPUT_TAG_FORMAT") || core.getInput("TAG_FORMAT")
+        // this.nugetKey = core.getInput("INPUT_NUGET_KEY") || core.getInput("NUGET_KEY")
+        // this.nugetSource = core.getInput("INPUT_NUGET_SOURCE") || core.getInput("NUGET_SOURCE")
+        // this.nuspecFile = core.getInput("INPUT_NUSPEC_FILE")
+        // this.includeSymbols = core.getInput("INPUT_INCLUDE_SYMBOLS") || core.getInput("INCLUDE_SYMBOLS")
     }
 
     _printErrorAndExit(msg) {
@@ -27,7 +42,7 @@ class Action {
     }
 
     _executeCommand(cmd, options) {
-        console.log(`executing: [${cmd}]`,options)
+        console.log(`executing: [${cmd}]`)
 
         const INPUT = cmd.split(" "), TOOL = INPUT[0], ARGS = INPUT.slice(1)
         return spawnSync(TOOL, ARGS, options)
@@ -70,8 +85,7 @@ class Action {
 
         const dir = path.dirname(this.projectFile);
         let files = this._getFiles(dir);
-        files.filter(fn => /\.s?nupkg$/.test(fn)).forEach(fn => {
-            console.log(`unlinking ${fn}`);
+        files.filter(fn => /\.s?nupkg$/.test(fn)).forEach(fn => {            
             fs.unlinkSync(fn);
     })
 
@@ -81,27 +95,24 @@ const cmd = `dotnet pack ${this.includeSymbols ? "--include-symbols -property:Sy
 console.log('[PACK] :: '+cmd)
         this._executeInProcess(cmd,path.dirname(this.projectFile))
 
-        // const packages = fs.readdirSync(".").filter(fn => {console.log(`is ${fn} a nuget ?`); return fn.endsWith("nupkg")});
-
         
         files = this._getFiles(dir);
-        console.log(files);
-        const packages = this._getFiles(dir).filter(fn => {console.log(`(getFiles) : is ${fn} a nuget  ? ${fn.endsWith("nupkg")}`); return fn.endsWith("nupkg")});
+        const packages = this._getFiles(dir).filter(fn => fn.endsWith("nupkg"));
 
         const packageList = packages.join(" ");
         console.log(`Generated Package(s): ${packageList}`)
 
+        const nugets = packages.filter(x => x.endsWith(".nupkg")).join(" ");
 
-        const pushCmd = `dotnet nuget push ${packageList} --source ${this.nugetSource}/v3/index.json --api-key ${this.nugetKey} --skip-duplicate ${!this.includeSymbols ? "--no-symbols" : ""}`;
+        const pushCmd = `dotnet nuget push ${nugets} --source ${this.nugetSource}/v3/index.json --api-key ${this.nugetKey} --skip-duplicate ${!this.includeSymbols ? "--no-symbols" : ""}`;
         console.log("[PUSH] :: "+pushCmd);
-        const pushOutput = this._executeCommand(pushCmd, { encoding: "utf-8" }).stdout
-
-        
+        const pushResult = this._executeCommand(pushCmd, { encoding: "utf-8" });
+        const pushOutput = pushResult.stdout;
 
         console.log(pushOutput)
 
-        if (/error/.test(pushOutput))
-            this._printErrorAndExit(`${/error.*/.exec(pushOutput)[0]}`)
+        // if (/error/.test(pushOutput))
+        //     this._printErrorAndExit(`${/error.*/.exec(pushOutput)[0]}`)
 
         const packageFilename = packages.filter(p => p.endsWith(".nupkg"))[0],
             symbolsFilename = packages.filter(p => p.endsWith(".snupkg"))[0]
@@ -118,31 +129,36 @@ console.log('[PACK] :: '+cmd)
             this._tagCommit(version)
     }
 
-    _checkForUpdate() {
+    _getNugetVersions(callback) {
         if (!this.packageName) {
             this.packageName = path.basename(this.projectFile).split(".").slice(0, -1).join(".")
         }
-
-        console.log(`Package Name: ${this.packageName}`)
-
         https.get(`${this.nugetSource}/v3-flatcontainer/${this.packageName}/index.json`, res => {
             let body = ""
 
             if (res.statusCode == 404)
-                this._pushPackage(this.version, this.packageName)
+                callback(this.version, this.packageName)
 
             if (res.statusCode == 200) {
                 res.setEncoding("utf8")
                 res.on("data", chunk => body += chunk)
                 res.on("end", () => {
                     const existingVersions = JSON.parse(body)
-                    if (existingVersions.versions.indexOf(this.version) < 0)
-                        this._pushPackage(this.version, this.packageName)
+                    callback(existingVersions);
                 })
             }
         }).on("error", e => {
             this._printErrorAndExit(`error: ${e.message}`)
         })
+    }
+
+    _checkForUpdate() {
+        this._getNugetVersions((existingVersions) => {
+            if (existingVersions.versions.indexOf(this.version) < 0)
+                this._pushPackage(this.version, this.packageName)
+            else 
+                console.log(`nuget ${this.packageName} ${this.version} already exist.`)
+        });       
     }
 
     run() {
