@@ -2,24 +2,23 @@ const os = require("os"),
     fs = require("fs"),
     path = require("path"),
     https = require("https"),
-    spawnSync = require("child_process").spawnSync,
-    core = require("../JsGithubActionEmulator/core")
+    spawnSync = require("child_process").spawnSync
 
 class Action {
     constructor() {
-        this.projectFile = core.getInput("INPUT_PROJECT_FILE_PATH")
-        this.configuration = core.getInput("INPUT_BUILD_CONFIGURATION") || "Release"
-        this.platform = core.getInput("INPUT_BUILD_PLATFORM")
-        this.packageName = core.getInput("INPUT_PACKAGE_NAME") || core.getInput("PACKAGE_NAME")
-        this.versionFile = core.getInput("INPUT_VERSION_FILE_PATH") || core.getInput("VERSION_FILE_PATH") || this.projectFile
-        this.versionRegex = new RegExp(core.getInput("INPUT_VERSION_REGEX") || core.getInput("VERSION_REGEX"), "m")
-        this.version = core.getInput("INPUT_VERSION_STATIC") || core.getInput("VERSION_STATIC")
-        this.tagCommit = core.getInput("INPUT_TAG_COMMIT") || core.getInput("TAG_COMMIT")
-        this.tagFormat = core.getInput("INPUT_TAG_FORMAT") || core.getInput("TAG_FORMAT")
-        this.nugetKey = core.getInput("INPUT_NUGET_KEY") || core.getInput("NUGET_KEY")
-        this.nugetSource = core.getInput("INPUT_NUGET_SOURCE") || core.getInput("NUGET_SOURCE")
-        this.nuspecFile = core.getInput("INPUT_NUSPEC_FILE")
-        this.includeSymbols = core.getInput("INPUT_INCLUDE_SYMBOLS") || core.getInput("INCLUDE_SYMBOLS")
+        this.projectFile = process.env.INPUT_PROJECT_FILE_PATH
+        this.configuration = process.env.INPUT_BUILD_CONFIGURATION
+        this.platform = process.env.INPUT_BUILD_PLATFORM
+        this.packageName = process.env.INPUT_PACKAGE_NAME || process.env.PACKAGE_NAME
+        this.versionFile = process.env.INPUT_VERSION_FILE_PATH || process.env.VERSION_FILE_PATH || this.projectFile
+        this.versionRegex = new RegExp(process.env.INPUT_VERSION_REGEX || process.env.VERSION_REGEX, "m")
+        this.version = process.env.INPUT_VERSION_STATIC || process.env.VERSION_STATIC
+        this.tagCommit = JSON.parse(process.env.INPUT_TAG_COMMIT || process.env.TAG_COMMIT)
+        this.tagFormat = process.env.INPUT_TAG_FORMAT || process.env.TAG_FORMAT
+        this.nugetKey = process.env.INPUT_NUGET_KEY || process.env.NUGET_KEY
+        this.nugetSource = process.env.INPUT_NUGET_SOURCE || process.env.NUGET_SOURCE
+        this.nuspecFile = process.env.INPUT_NUSPEC_FILE
+        this.includeSymbols = JSON.parse(process.env.INPUT_INCLUDE_SYMBOLS || process.env.INCLUDE_SYMBOLS)
     }
 
     _printErrorAndExit(msg) {
