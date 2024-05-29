@@ -1,10 +1,4 @@
-## THIS REPOSITORY IS ARCHIVED 😴
 
-> It's time consuming to add features & stay in sync with changes in dotnet world so no new issues / PRs will be accepted
-
-You can replicate the functionality of this action & much more by using the offical tools like dotnet CLI or GitHub CLI etc.,
-
----
 
 # ✨ Publish NuGet
 
