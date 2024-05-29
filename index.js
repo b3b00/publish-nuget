@@ -76,9 +76,9 @@ class Action {
             fs.unlinkSync(fn);
     })
 
-        this._executeInProcess(`dotnet build ${this.configuration ? "--configuration "+this.configuration : ""} ${this.projectFile} ${this.platform ? "-property:Platform="+this.platform : ""}`)
+        this._executeInProcess(`dotnet build ${this.configuration ? "--configuration "+this.configuration : ""} ${path.basename(this.projectFile)} ${this.platform ? "-property:Platform="+this.platform : ""}`,path.dirname(this.projectFile))
 
-const cmd = `dotnet pack ${this.includeSymbols ? "--include-symbols -property:SymbolPackageFormat=snupkg" : ""} -property:NuspecFile=${this.nuspecFile} --no-build  ${this.configuration ? "--configuration "+this.configuration : ""} ${this.projectFile} ${this.platform ? "-property:Platform="+this.platform : ""} `;
+const cmd = `dotnet pack ${this.includeSymbols ? "--include-symbols -property:SymbolPackageFormat=snupkg" : ""} -property:NuspecFile=${path.basename(this.nuspecFile)} --no-build  ${this.configuration ? "--configuration "+this.configuration : ""} ${path.basename(this.projectFile)} ${this.platform ? "-property:Platform="+this.platform : ""} `;
 console.log('[PACK] :: '+cmd)
         this._executeInProcess(cmd,path.dirname(this.projectFile))
 
@@ -89,11 +89,15 @@ console.log('[PACK] :: '+cmd)
         console.log(files);
         const packages = this._getFiles(dir).filter(fn => {console.log(`(getFiles) : is ${fn} a nuget  ? ${fn.endsWith("nupkg")}`); return fn.endsWith("nupkg")});
 
-        console.log(`Generated Package(s): ${packages.join(", ")}`)
+        const packageList = packages.join(" ");
+        console.log(`Generated Package(s): ${packageList}`)
 
-        const pushCmd = `dotnet nuget push *.nupkg --source ${this.nugetSource}/v3/index.json --api-key ${this.nugetKey} --skip-duplicate ${!this.includeSymbols ? "--no-symbols" : ""}`;
+
+        const pushCmd = `dotnet nuget push ${packageList} --source ${this.nugetSource}/v3/index.json --api-key ${this.nugetKey} --skip-duplicate ${!this.includeSymbols ? "--no-symbols" : ""}`;
         console.log("[PUSH] :: "+pushCmd);
         const pushOutput = this._executeCommand(pushCmd, { encoding: "utf-8" }).stdout
+
+        
 
         console.log(pushOutput)
 
