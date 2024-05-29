@@ -61,7 +61,7 @@ class Action {
         this._executeInProcess(`git push origin ${TAG}`)
 
         //process.stdout.write(`::set-output name=VERSION::${TAG}` + os.EOL)
-        fs.appendFile(process.env.GITHUB_OUTPUT,`VERSION=${TAG}` + os.EOL)        
+        fs.appendFile(process.env.GITHUB_OUTPUT,`VERSION=${TAG}` + os.EOL,(err) => {console.log(err);})        
     }
 
     
@@ -119,15 +119,15 @@ console.log('[PACK] :: '+cmd)
             symbolsFilename = packages.filter(p => p.endsWith(".snupkg"))[0]
 
         // process.stdout.write(`::set-output name=PACKAGE_NAME::${packageFilename}` + os.EOL)
-        fs.appendFile(process.env.GITHUB_OUTPUT,`PACKAGE_NAME=${packageFilename}` + os.EOL)
+        fs.appendFile(process.env.GITHUB_OUTPUT,`PACKAGE_NAME=${packageFilename}` + os.EOL,(err) => {console.log(err);})
         // process.stdout.write(`::set-output name=PACKAGE_PATH::${path.resolve(packageFilename)}` + os.EOL)
-        fs.appendFile(process.env.GITHUB_OUTPUT,`PACKAGE_PATH=${path.resolve(packageFilename)}` + os.EOL)
+        fs.appendFile(process.env.GITHUB_OUTPUT,`PACKAGE_PATH=${path.resolve(packageFilename)}` + os.EOL,(err) => {console.log(err);})
 
         if (symbolsFilename) {
             // process.stdout.write(`::set-output name=SYMBOLS_PACKAGE_NAME::${symbolsFilename}` + os.EOL)
-            fs.appendFile(process.env.GITHUB_OUTPUT,`SYMBOLS_PACKAGE_NAME=${symbolsFilename}` + os.EOL)
+            fs.appendFile(process.env.GITHUB_OUTPUT,`SYMBOLS_PACKAGE_NAME=${symbolsFilename}` + os.EOL,(err) => {console.log(err);})
             // process.stdout.write(`::set-output name=SYMBOLS_PACKAGE_PATH::${path.resolve(symbolsFilename)}` + os.EOL)
-            fs.appendFile(process.env.GITHUB_OUTPUT,`SYMBOLS_PACKAGE_PATH=${path.resolve(symbolsFilename)}` + os.EOL)
+            fs.appendFile(process.env.GITHUB_OUTPUT,`SYMBOLS_PACKAGE_PATH=${path.resolve(symbolsFilename)}` + os.EOL,(err) => {console.log(err);})
         }
 
         if (this.tagCommit)
