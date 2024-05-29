@@ -28,7 +28,7 @@ class Action {
     }
 
     _executeCommand(cmd, options) {
-        console.log(`executing: [${cmd}]`)
+        console.log(`executing: [${cmd}]`,options)
 
         const INPUT = cmd.split(" "), TOOL = INPUT[0], ARGS = INPUT.slice(1)
         return spawnSync(TOOL, ARGS, options)
