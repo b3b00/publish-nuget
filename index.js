@@ -48,6 +48,16 @@ class Action {
         process.stdout.write(`::set-output name=VERSION::${TAG}` + os.EOL)
     }
 
+    
+    _getFiles(dir) {
+        const dirents = fs.readdirSync(dir, { withFileTypes: true });
+        const files = (dirents.map((dirent) => {
+            const res = path.resolve(dir, dirent.name);
+            return dirent.isDirectory() ? this._getFiles(res) : res;
+        }));
+        return Array.prototype.concat(...files);
+    }
+
     _pushPackage(version, name) {
         console.log(`✨ found new version (${version}) of ${name}`)
 
@@ -58,19 +68,31 @@ class Action {
 
         console.log(`NuGet Source: ${this.nugetSource}`)
 
-        fs.readdirSync(".").filter(fn => /\.s?nupkg$/.test(fn)).forEach(fn => fs.unlinkSync(fn))
+        const dir = path.dirname(this.projectFile);
+        let files = this._getFiles(dir);
+        files.filter(fn => /\.s?nupkg$/.test(fn)).forEach(fn => {
+            console.log(`unlinking ${fn}`);
+            fs.unlinkSync(fn);
+    })
 
-        this._executeInProcess(`dotnet build --configuration ${this.configuration} ${this.projectFile} -property:Platform=${this.platform}`)
+        this._executeInProcess(`dotnet build ${this.configuration ? "--configuration "+this.configuration : ""} ${this.projectFile} ${this.platform ? "-property:Platform="+this.platform : ""}`)
 
-const cmd = `dotnet pack ${this.includeSymbols ? "--include-symbols -property:SymbolPackageFormat=snupkg" : ""} -property:NuspecFile=${this.nuspecFile} --no-build --configuration ${this.configuration} ${this.projectFile} -property:Platform=${this.platform} --output .`;
-console.log('PACK :: '+cmd)
+const cmd = `dotnet pack ${this.includeSymbols ? "--include-symbols -property:SymbolPackageFormat=snupkg" : ""} -property:NuspecFile=${this.nuspecFile} --no-build  ${this.configuration ? "--configuration "+this.configuration : ""} ${this.projectFile} ${this.platform ? "-property:Platform="+this.platform : ""} `;
+console.log('[PACK] :: '+cmd)
         this._executeInProcess(cmd)
 
-        const packages = fs.readdirSync(".").filter(fn => fn.endsWith("nupkg"))
+        // const packages = fs.readdirSync(".").filter(fn => {console.log(`is ${fn} a nuget ?`); return fn.endsWith("nupkg")});
+
+        
+        files = this._getFiles(dir);
+        console.log(files);
+        const packs = this._getFiles(dir).filter(fn => {console.log(`(getFiles) : is ${fn} a nuget  ? ${fn.endsWith("nupkg")}`); return fn.endsWith("nupkg")});
+
         console.log(`Generated Package(s): ${packages.join(", ")}`)
 
-        const pushCmd = `dotnet nuget push *.nupkg --source ${this.nugetSource}/v3/index.json --api-key ${this.nugetKey} --skip-duplicate ${!this.includeSymbols ? "--no-symbols" : ""}`,
-            pushOutput = this._executeCommand(pushCmd, { encoding: "utf-8" }).stdout
+        const pushCmd = `dotnet nuget push *.nupkg --source ${this.nugetSource}/v3/index.json --api-key ${this.nugetKey} --skip-duplicate ${!this.includeSymbols ? "--no-symbols" : ""}`;
+        console.log("[PUSH] :: "+pushCmd);
+        pushOutput = this._executeCommand(pushCmd, { encoding: "utf-8" }).stdout
 
         console.log(pushOutput)
 
