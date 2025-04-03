@@ -138,8 +138,8 @@ console.log('[PACK] :: '+cmd)
         if (!this.packageName) {
             this.packageName = path.basename(this.projectFile).split(".").slice(0, -1).join(".")
         }
-        console.log(`getting nuget informartion :: ${this.nugetSource}/v3-flatcontainer/${this.packageName}/index.json`);
-        https.get(`${this.nugetSource}/v3-flatcontainer/${this.packageName}/index.json`, res => {
+        console.log(`getting nuget informartion :: ${this.nugetSource}/v3-flatcontainer/${this.packageName.toLowerCase()}/index.json`);
+        https.get(`${this.nugetSource}/v3-flatcontainer/${this.packageNamei.toLowerCase()}/index.json`, res => {
             let body = ""
 
             if (res.statusCode == 404) {
