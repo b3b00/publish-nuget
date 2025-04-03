@@ -138,11 +138,14 @@ console.log('[PACK] :: '+cmd)
         if (!this.packageName) {
             this.packageName = path.basename(this.projectFile).split(".").slice(0, -1).join(".")
         }
+        console.log(`getting nuget informartion :: ${this.nugetSource}/v3-flatcontainer/${this.packageName}/index.json`);
         https.get(`${this.nugetSource}/v3-flatcontainer/${this.packageName}/index.json`, res => {
             let body = ""
 
-            if (res.statusCode == 404)
+            if (res.statusCode == 404) {
+                console.log(`nuget >${this.packageName}< not found `)
                 callback(this.version, this.packageName)
+            }
 
             if (res.statusCode == 200) {
                 res.setEncoding("utf8")
@@ -159,6 +162,8 @@ console.log('[PACK] :: '+cmd)
 
     _checkForUpdate() {
         this._getNugetVersions((existingVersions) => {
+            console.log('existing versions : ',existingVersions);
+            console.log(`looking for version ${this.version}`);
             if (existingVersions.versions.indexOf(this.version) < 0)
                 this._pushPackage(this.version, this.packageName)
             else 
